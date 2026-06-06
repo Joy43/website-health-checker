@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/ssjoy/website-health-checker/internal/services"
 )
 
@@ -18,49 +18,37 @@ func NewHealthHandler(service services.HealthService) *HealthHandler {
 }
 
 // GetHealth handles GET /health requests.
-func (h *HealthHandler) GetHealth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = w.Write([]byte(`{"error":"Method Not Allowed"}`))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	status := h.service.GetHealth(r.Context())
+// @Summary      Get overall system health
+// @Description  Checks API status, MySQL database connectivity, and Redis cache connectivity.
+// @Tags         health
+// @Produce      json
+// @Success      200  {object}  services.HealthStatus
+// @Failure      503  {object}  services.HealthStatus
+// @Router       /health [get]
+func (h *HealthHandler) GetHealth(c *gin.Context) {
+	status := h.service.GetHealth(c.Request.Context())
 	
-	// If any services are disconnected, we should return a 503 Service Unavailable or just 200 OK.
-	// The prompt's expected response format:
-	// { "status": "ok", "service": "health-checker", ... }
-	// Let's return 200 OK, but if status is "error" we could return 503 Service Unavailable as a production standard.
-	// Let's set StatusServiceUnavailable if status.Status == "error" or just return 200 OK for standard health check.
-	// Actually, Kubernetes and other health checkers expect non-200 codes when failing, so setting status to 503 is best practice!
 	if status.Status == "error" {
-		w.WriteHeader(http.StatusServiceUnavailable)
+		c.JSON(http.StatusServiceUnavailable, status)
 	} else {
-		w.WriteHeader(http.StatusOK)
+		c.JSON(http.StatusOK, status)
 	}
-
-	_ = json.NewEncoder(w).Encode(status)
 }
 
 // GetDetailedHealth handles GET /health/details requests.
-func (h *HealthHandler) GetDetailedHealth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = w.Write([]byte(`{"error":"Method Not Allowed"}`))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	status := h.service.GetDetailedHealth(r.Context())
+// @Summary      Get detailed system health status
+// @Description  Retrieves status details for MySQL, Redis, and overall system uptime.
+// @Tags         health
+// @Produce      json
+// @Success      200  {object}  services.DetailedHealthStatus
+// @Failure      503  {object}  services.DetailedHealthStatus
+// @Router       /health/details [get]
+func (h *HealthHandler) GetDetailedHealth(c *gin.Context) {
+	status := h.service.GetDetailedHealth(c.Request.Context())
 
 	if status.MySQL.Status == "unhealthy" || status.Redis.Status == "unhealthy" {
-		w.WriteHeader(http.StatusServiceUnavailable)
+		c.JSON(http.StatusServiceUnavailable, status)
 	} else {
-		w.WriteHeader(http.StatusOK)
+		c.JSON(http.StatusOK, status)
 	}
-
-	_ = json.NewEncoder(w).Encode(status)
 }

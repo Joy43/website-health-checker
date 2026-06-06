@@ -1,0 +1,167 @@
+swagger: "2.0"
+info:
+  description: A production-ready Golang Health Checker API backend with MySQL and Redis checks.
+  title: Health Checker API
+  contact: {}
+  version: "1.0"
+host: localhost:8000
+basePath: /
+schemes:
+  - http
+paths:
+  /cache:
+    get:
+      description: Retrieves the value associated with a key from Redis.
+      tags:
+        - cache
+      produces:
+        - application/json
+      summary: Get cached item
+      parameters:
+        - type: string
+          description: Cache Key
+          name: key
+          in: query
+          required: true
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.CacheResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+    post:
+      description: Stores a key-value pair in Redis with a 24-hour default expiration.
+      tags:
+        - cache
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      summary: Save cache item
+      parameters:
+        - description: Cache Entry Details
+          name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.CacheRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+  /health:
+    get:
+      description: Checks API status, MySQL database connectivity, and Redis cache connectivity.
+      tags:
+        - health
+      produces:
+        - application/json
+      summary: Get overall system health
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.HealthStatus'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/services.HealthStatus'
+  /health/details:
+    get:
+      description: Retrieves status details for MySQL, Redis, and overall system uptime.
+      tags:
+        - health
+      produces:
+        - application/json
+      summary: Get detailed system health status
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.DetailedHealthStatus'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/services.DetailedHealthStatus'
+definitions:
+  handlers.CacheRequest:
+    type: object
+    required:
+      - key
+      - value
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+  handlers.CacheResponse:
+    type: object
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+  handlers.ErrorResponse:
+    type: object
+    properties:
+      error:
+        type: string
+  handlers.MessageResponse:
+    type: object
+    properties:
+      message:
+        type: string
+  services.DetailedHealthStatus:
+    type: object
+    properties:
+      api:
+        type: string
+      mysql:
+        $ref: '#/definitions/services.DBStatus'
+      redis:
+        $ref: '#/definitions/services.CacheStatus'
+      uptime:
+        type: string
+  services.DBStatus:
+    type: object
+    properties:
+      status:
+        type: string
+  services.CacheStatus:
+    type: object
+    properties:
+      status:
+        type: string
+  services.HealthStatus:
+    type: object
+    properties:
+      mysql:
+        type: string
+      redis:
+        type: string
+      service:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string

@@ -16,6 +16,8 @@ import (
 	"github.com/ssjoy/website-health-checker/internal/redis"
 	"github.com/ssjoy/website-health-checker/internal/routes"
 	"github.com/ssjoy/website-health-checker/internal/services"
+
+	_ "github.com/ssjoy/website-health-checker/docs"
 )
 
 func main() {

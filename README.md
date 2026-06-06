@@ -1,283 +1,599 @@
-# Health Checker Website Backend
+# 🏥 Health Checker Website Backend
 
-A production-ready, containerized, and highly-scalable health monitoring backend written in **Golang**, adhering to **Clean Architecture** principles.
-
----
-
-## 1. Project Overview
-
-The Health Checker Website Backend monitors application status and verifies connectivity to backend data layers (MySQL and Redis). It is built with Go's standard library for routing/serving HTTP, uses Structured JSON Logging via `log/slog`, implements graceful shutdowns, handles connection pooling, runs as a secure non-root Docker container, and is orchestrated with Docker Compose.
+A production-ready, containerized, and scalable Health Monitoring Backend built with **Golang**, **MySQL**, **Redis**, **Docker**, and **Docker Compose**, following **Clean Architecture** principles and industry best practices.
 
 ---
 
-## 2. Architecture Diagram
+# 📋 Table of Contents
 
-The project is structured under **Clean Architecture** guidelines:
+* Overview
+* Features
+* Architecture
+* Tech Stack
+* Project Structure
+* Quick Start
+* Environment Configuration
+* Docker Services
+* API Documentation
+* Database Access
+* Swagger Documentation
+* Development Workflow
+* Docker Commands
+* Health Checks
+* Troubleshooting
+* Production Deployment
+* Security Best Practices
+
+---
+
+# 🚀 Overview
+
+The Health Checker Website Backend provides real-time monitoring and verification of critical system components.
+
+### Core Responsibilities
+
+* Application Health Monitoring
+* MySQL Connectivity Verification
+* Redis Connectivity Verification
+* Cache Management APIs
+* Structured Logging
+* Graceful Shutdown
+* Dockerized Deployment
+* Production-Ready Configuration
+
+---
+
+# ✨ Features
+
+### Application Monitoring
+
+* Health Check Endpoint
+* Detailed System Status Endpoint
+* Uptime Monitoring
+* Dependency Status Verification
+
+### Database Features
+
+* MySQL Connection Pooling
+* Persistent Database Storage
+* Automatic Health Monitoring
+
+### Cache Features
+
+* Redis Connection Pooling
+* Redis Persistence (AOF + RDB)
+* Cache Testing Endpoints
+
+### Production Features
+
+* Docker Multi-stage Build
+* Non-root Containers
+* Structured JSON Logging
+* Graceful Shutdown
+* Environment-based Configuration
+* Health Checks
+* Dedicated Docker Network
+
+---
+
+# 🏗 Architecture
 
 ```mermaid
 graph TD
-    subgraph Drivers & Frameworks (External)
-        API_Client([HTTP Client])
-        MySQL_DB[(MySQL 8)]
-        Redis_Cache[(Redis 7)]
-    end
 
-    subgraph Interface Adapters (Transport & Storage)
-        Mux[HTTP Multiplexer / Router]
-        Middlewares[Logging / Recovery Middlewares]
-        HealthHandler[Health Handler]
-        CacheHandler[Cache Handler]
-        MySQLClient[MySQL Connection Pool]
-        RedisClient[Redis Client Pool]
-    end
+Client[Client Applications]
 
-    subgraph Application Business Logic
-        HealthService[Health Service]
-        CacheService[Cache Service]
-    end
+Client --> API
 
-    API_Client --> Middlewares
-    Middlewares --> Mux
-    Mux --> HealthHandler
-    Mux --> CacheHandler
+subgraph API Layer
+API[HTTP Server]
+Middleware[Logging & Recovery Middleware]
+Routes[API Routes]
+end
 
-    HealthHandler --> HealthService
-    CacheHandler --> CacheService
+subgraph Service Layer
+HealthService[Health Service]
+CacheService[Cache Service]
+end
 
-    HealthService --> MySQLClient
-    HealthService --> RedisClient
-    CacheService --> RedisClient
+subgraph Infrastructure Layer
+MySQL[(MySQL)]
+Redis[(Redis)]
+end
 
-    MySQLClient --> MySQL_DB
-    RedisClient --> Redis_Cache
+API --> Middleware
+Middleware --> Routes
+
+Routes --> HealthService
+Routes --> CacheService
+
+HealthService --> MySQL
+HealthService --> Redis
+
+CacheService --> Redis
 ```
 
-- **Entities / Core Models**: Internal logic structures.
-- **Services (Use Cases)**: Domain logic for ping checks and cache storage.
-- **Handlers / Controllers**: Decodes HTTP JSON payloads and maps responses.
-- **Database / Infrastructure**: Physical drivers for database connections.
+---
+
+# 🛠 Tech Stack
+
+| Layer            | Technology     |
+| ---------------- | -------------- |
+| Backend          | Golang         |
+| Database         | MySQL 8        |
+| Cache            | Redis 7        |
+| Database UI      | phpMyAdmin     |
+| Containerization | Docker         |
+| Orchestration    | Docker Compose |
+| Logging          | slog           |
+| Configuration    | .env           |
 
 ---
 
-## 3. Setup Instructions
+# 📁 Project Structure
 
-### Prerequisites
-* [Docker](https://docs.docker.com/get-docker/) (v20+)
-* [Docker Compose](https://docs.docker.com/compose/install/) (v2+)
-* [Golang](https://golang.org/dl/) (v1.25+ if running locally outside Docker)
+```text
+health-checker/
 
-### Run with Docker Compose (Recommended)
-1. Clone the repository.
-2. Initialize the `.env` configuration file (already created at project root).
-3. Build and launch all services:
-   ```bash
-   docker compose up --build
-   ```
-4. Verify all containers are running successfully:
-   ```bash
-   docker compose ps
-   ```
-
----
-
-## 4. Environment Variables
-
-Configure application settings by modifying the `.env` file at the root directory:
-
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `APP_NAME` | Name of the API application | `Health Checker` |
-| `APP_ENV` | Application environment stage | `development` |
-| `APP_PORT` | Listening port for the Golang server | `8000` |
-| `DB_HOST` | Database server hostname | `mysql` |
-| `DB_PORT` | Database server port | `3306` |
-| `DB_NAME` | Application database schema | `health_checker` |
-| `DB_USER` | MySQL database user | `health_user` |
-| `DB_PASSWORD` | MySQL database password | `health_password` |
-| `MYSQL_ROOT_PASSWORD` | MySQL root administrative password | `root_password` |
-| `REDIS_HOST` | Redis hostname | `redis` |
-| `REDIS_PORT` | Redis port | `6379` |
-| `REDIS_PASSWORD` | Redis password | *(Empty)* |
-| `REDIS_DB` | Redis database slot | `0` |
-
----
-
-## 5. API Documentation
-
-### Access URLs
-* **API Service**: `http://localhost:8000`
-* **phpMyAdmin**: `http://localhost:8080`
-* **MySQL Database**: `localhost:3306`
-* **Redis Cache**: `localhost:6379`
-
-### Endpoints
-
-#### 1. System Health
-Verify api status, mysql, and redis connectivity.
-
-* **URL**: `/health`
-* **Method**: `GET`
-* **Response Status**: `200 OK` (Healthy) or `503 Service Unavailable` (If MySQL/Redis is down)
-* **Response Body**:
-  ```json
-  {
-    "status": "ok",
-    "service": "health-checker",
-    "mysql": "connected",
-    "redis": "connected",
-    "timestamp": "2026-06-06T10:00:00Z"
-  }
-  ```
-
-#### 2. Detailed Health Check
-Fetch latency status and detailed uptime records.
-
-* **URL**: `/health/details`
-* **Method**: `GET`
-* **Response Status**: `200 OK` (Healthy) or `503 Service Unavailable`
-* **Response Body**:
-  ```json
-  {
-    "api": "healthy",
-    "mysql": {
-      "status": "healthy"
-    },
-    "redis": {
-      "status": "healthy"
-    },
-    "uptime": "24h0m0s"
-  }
-  ```
-
-#### 3. Save Cache Key
-Store a string key-value pair in Redis.
-
-* **URL**: `/cache`
-* **Method**: `POST`
-* **Headers**: `Content-Type: application/json`
-* **Request Body**:
-  ```json
-  {
-    "key": "health",
-    "value": "ok"
-  }
-  ```
-* **Response Status**: `200 OK`
-* **Response Body**:
-  ```json
-  {
-    "message": "cached successfully"
-  }
-  ```
-
-#### 4. Retrieve Cache Key
-Retrieve a stored key from Redis.
-
-* **URL**: `/cache?key=<name>`
-* **Method**: `GET`
-* **Response Status**: `200 OK` or `404 Not Found`
-* **Response Body**:
-  ```json
-  {
-    "key": "health",
-    "value": "ok"
-  }
-  ```
+├── cmd/
+│   └── server/
+│       └── main.go
+│
+├── internal/
+│   ├── config/
+│   │   └── config.go
+│   │
+│   ├── database/
+│   │   └── mysql.go
+│   │
+│   ├── redis/
+│   │   └── redis.go
+│   │
+│   ├── handlers/
+│   │   ├── health_handler.go
+│   │   └── cache_handler.go
+│   │
+│   ├── middleware/
+│   │   ├── logging.go
+│   │   └── recovery.go
+│   │
+│   ├── routes/
+│   │   └── routes.go
+│   │
+│   └── services/
+│       ├── health_service.go
+│       └── cache_service.go
+│
+├── migrations/
+│   └── init.sql
+│
+├── configs/
+│
+├── Dockerfile
+├── docker-compose.yml
+├── .env
+├── .gitignore
+├── go.mod
+├── go.sum
+└── README.md
+```
 
 ---
 
-## 6. Docker Commands
+# ⚡ Quick Start
 
-Commonly used commands for administration and maintenance:
+## Clone Repository
 
-* **Build and Start Services (in detached mode)**:
-  ```bash
-  docker compose up -d --build
-  ```
-* **View Container Statuses**:
-  ```bash
-  docker compose ps
-  ```
-* **View Real-Time Logs**:
-  ```bash
-  docker compose logs -f
-  ```
-* **Stop Services (keep volume storage)**:
-  ```bash
-  docker compose down
-  ```
-* **Stop Services and Clear Volumes (deletes database)**:
-  ```bash
-  docker compose down -v
-  ```
-* **Run Database CLI shell**:
-  ```bash
-  docker compose exec mysql mysql -u health_user -phealth_password health_checker
-  ```
-* **Run Redis CLI shell**:
-  ```bash
-  docker compose exec redis redis-cli
-  ```
-
----
-
-## 7. Development Workflow
-
-### Local Development (Without Docker)
-If you wish to run the app directly on your host machine:
-1. Ensure MySQL and Redis servers are running locally.
-2. Edit database settings in `.env` (e.g. `DB_HOST=localhost`, `REDIS_HOST=localhost`).
-3. Run the compiler:
-   ```bash
-   go run cmd/server/main.go
-   ```
-
-### Dependency Management
-To add packages, execute:
 ```bash
-go get <package_name>
+git clone <repository-url>
+cd health-checker
+```
+
+## Start All Services
+
+```bash
+docker compose up --build
+```
+
+## Run In Background
+
+```bash
+docker compose up -d --build
+```
+
+## Verify Containers
+
+```bash
+docker compose ps
+```
+
+---
+
+# ⚙️ Environment Configuration
+
+Create a `.env` file in the project root.
+
+```env
+APP_NAME=Health Checker
+APP_ENV=development
+APP_PORT=8000
+
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=health_checker
+DB_USER=health_user
+DB_PASSWORD=health_password
+
+MYSQL_DATABASE=health_checker
+MYSQL_USER=health_user
+MYSQL_PASSWORD=health_password
+MYSQL_ROOT_PASSWORD=root_password
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+```
+
+---
+
+# 🐳 Docker Services
+
+| Service    | Port | Purpose             |
+| ---------- | ---- | ------------------- |
+| API        | 8000 | Golang Backend      |
+| MySQL      | 3306 | Database            |
+| Redis      | 6379 | Cache               |
+| phpMyAdmin | 8080 | Database Management |
+
+---
+
+# 🌐 Service URLs
+
+| Service         | URL                                      |
+| --------------- | ---------------------------------------- |
+| API             | http://localhost:8000                    |
+| Health Check    | http://localhost:8000/health             |
+| Detailed Health | http://localhost:8000/health/details     |
+| Swagger         | http://localhost:8000/swagger/index.html |
+| phpMyAdmin      | http://localhost:8080                    |
+
+---
+
+# 📚 API Documentation
+
+## Health Check
+
+### Request
+
+```http
+GET /health
+```
+
+### Response
+
+```json
+{
+  "status": "ok",
+  "service": "health-checker",
+  "mysql": "connected",
+  "redis": "connected",
+  "timestamp": "2026-06-06T10:00:00Z"
+}
+```
+
+---
+
+## Detailed Health Check
+
+### Request
+
+```http
+GET /health/details
+```
+
+### Response
+
+```json
+{
+  "api": "healthy",
+  "mysql": {
+    "status": "healthy"
+  },
+  "redis": {
+    "status": "healthy"
+  },
+  "uptime": "24h0m0s"
+}
+```
+
+---
+
+## Save Cache Data
+
+### Request
+
+```http
+POST /cache
+```
+
+```json
+{
+  "key": "health",
+  "value": "ok"
+}
+```
+
+### Response
+
+```json
+{
+  "message": "cached successfully"
+}
+```
+
+---
+
+## Retrieve Cache Data
+
+### Request
+
+```http
+GET /cache?key=health
+```
+
+### Response
+
+```json
+{
+  "key": "health",
+  "value": "ok"
+}
+```
+
+---
+
+# 🗄 Database Access
+
+## phpMyAdmin
+
+URL:
+
+```text
+http://localhost:8080
+```
+
+### Standard User
+
+| Field    | Value           |
+| -------- | --------------- |
+| Username | health_user     |
+| Password | health_password |
+
+### Root User
+
+| Field    | Value         |
+| -------- | ------------- |
+| Username | root          |
+| Password | root_password |
+
+---
+
+## Direct Database URL
+
+```text
+http://localhost:8080/index.php?route=/database/structure&db=health_checker
+```
+
+---
+
+# 📖 Swagger Documentation
+
+Access Swagger UI:
+
+```text
+http://localhost:8000/swagger/index.html
+```
+
+---
+
+# 👨‍💻 Development Workflow
+
+## Run Locally
+
+Update `.env`
+
+```env
+DB_HOST=localhost
+REDIS_HOST=localhost
+```
+
+Run application:
+
+```bash
+go run cmd/server/main.go
+```
+
+---
+
+## Dependency Management
+
+Add dependency:
+
+```bash
+go get <package-name>
+```
+
+Cleanup modules:
+
+```bash
 go mod tidy
 ```
 
 ---
 
-## 8. Health Check Guide
+# 🐳 Docker Commands
 
-* **MySQL Health Check**: Handled by `mysqladmin ping` inside the database container.
-* **Redis Health Check**: Handled by `redis-cli ping` inside the cache container.
-* **API Service Dependability**: The API service relies on both MySQL and Redis health checks passing before booting up (`depends_on: { condition: service_healthy }`).
+## Build & Start
+
+```bash
+docker compose up -d --build
+```
+
+## Stop Containers
+
+```bash
+docker compose down
+```
+
+## Stop & Remove Volumes
+
+```bash
+docker compose down -v
+```
+
+## View Logs
+
+```bash
+docker compose logs -f
+```
+
+## View Running Containers
+
+```bash
+docker compose ps
+```
 
 ---
 
-## 9. Troubleshooting
+# 🔍 Health Checks
 
-* **MySQL Connection Refused**:
-  * Check if MySQL is still starting up (can take up to 10 seconds on first run to setup tables).
-  * Ensure user credentials match between `.env` and `docker-compose.yml`.
-* **Redis Connection Refused**:
-  * Run `docker compose logs redis` to check for configuration or memory dump failures.
-* **Ports Already In Use**:
-  * If ports `8000`, `8080`, `3306`, or `6379` are bound by local software, stop them or change ports in the `.env` file before executing `docker compose up`.
+### MySQL
+
+```bash
+mysqladmin ping
+```
+
+### Redis
+
+```bash
+redis-cli ping
+```
+
+### API Dependency
+
+The API container starts only when:
+
+* MySQL is healthy
+* Redis is healthy
+
+Configured via:
+
+```yaml
+depends_on:
+  mysql:
+    condition: service_healthy
+
+  redis:
+    condition: service_healthy
+```
 
 ---
 
-## 10. Production Deployment Guide
+# 🛠 Troubleshooting
 
-For secure cloud deployment:
-1. **Change Default Credentials**: Set secure passwords for MySQL Root, MySQL User, and Redis.
-2. **Expose Ports Carefully**: Do not expose ports `3306`, `6379`, or `8080` to the public internet. Only the API service (port `8000` or via reverse proxy) should be exposed.
-3. **Use Reverse Proxy**: Deploy Nginx or Caddy to terminate HTTPS traffic and proxy calls to port `8000`.
-4. **Environment settings**: Set `APP_ENV=production` inside your configuration manager.
-5. **Logs aggregation**: Pipe JSON output logs from standard out to cloud logs engines (e.g. AWS CloudWatch, Datadog).
+## MySQL Connection Error
 
-## API Documentation
-## http://localhost:8000/health/details#
-## http://localhost:8000/health
-## sql databse
-http://localhost:8080/index.php?route=/database/structure&db=health_checker
-## Standard User (Recommended)
-Username: health_user
-Password: health_password
-## Root User
-Username: root
-Password: root_password#
+Check logs:
+
+```bash
+docker compose logs mysql
+```
+
+Verify credentials:
+
+* DB_HOST
+* DB_USER
+* DB_PASSWORD
+
+---
+
+## Redis Connection Error
+
+Check logs:
+
+```bash
+docker compose logs redis
+```
+
+---
+
+## Port Already In Use
+
+Ensure these ports are available:
+
+```text
+8000
+8080
+3306
+6379
+```
+
+---
+
+# 🚀 Production Deployment
+
+## Recommended Setup
+
+```text
+Internet
+    │
+    ▼
+Nginx / Caddy
+    │
+    ▼
+Health Checker API
+    │
+ ┌──┴──┐
+ ▼     ▼
+MySQL Redis
+```
+
+### Production Checklist
+
+* Change all default passwords
+* Enable HTTPS
+* Use Reverse Proxy
+* Restrict Database Ports
+* Enable Log Aggregation
+* Enable Monitoring & Alerting
+* Configure Automated Backups
+
+---
+
+# 🔐 Security Best Practices
+
+### Container Security
+
+* Run containers as non-root users
+* Use multi-stage Docker builds
+* Minimize image size
+
+### Database Security
+
+* Strong passwords
+* Private network access
+* Regular backups
+
+### Application Security
+
+* Input validation
+* Request timeouts
+* Graceful error handling
+* Environment-based secrets
+
+---
+
+# 📄 License
+
+This project is intended for educational, development, and production deployment purposes following modern Golang backend best practices.
