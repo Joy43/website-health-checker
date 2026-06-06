@@ -1,0 +1,32 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+health-checker
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Go tools
+go.work
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+
+# Containers / DB data
+mysql_data/
+redis_data/
