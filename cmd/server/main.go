@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	// 1. Initialize structured JSON logger
+	//  Initialize structured JSON logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
@@ -29,7 +29,7 @@ func main() {
 
 	logger.Info("starting health checker application")
 
-	// 2. Load Configuration
+	//  Load Configuration
 	cfg, err := config.Load()
 	if err != nil {
 		logger.Error("failed to load configuration", slog.Any("error", err))
@@ -42,7 +42,7 @@ func main() {
 		slog.Int("port", cfg.AppPort),
 	)
 
-	// 3. Connect to MySQL Database (with pooling)
+	//  Connect to MySQL Database (with pooling)
 	logger.Info("connecting to mysql database", slog.String("host", cfg.DBHost), slog.Int("port", cfg.DBPort))
 	db, err := database.Connect(cfg)
 	if err != nil {
@@ -57,7 +57,7 @@ func main() {
 	}()
 	logger.Info("mysql connection pool initialized successfully")
 
-	// 4. Connect to Redis Cache (with pooling)
+	//  Connect to Redis Cache (with pooling)
 	logger.Info("connecting to redis cache", slog.String("host", cfg.RedisHost), slog.Int("port", cfg.RedisPort))
 	rdb, err := redis.Connect(cfg)
 	if err != nil {
@@ -72,7 +72,7 @@ func main() {
 	}()
 	logger.Info("redis client pool initialized successfully")
 
-	// 5. Initialize Services, Handlers and Router
+	//  ---------- Initialize Services, Handlers and Router -----------
 	startTime := time.Now()
 	healthService := services.NewHealthService(db, rdb, startTime)
 	cacheService := services.NewCacheService(rdb)
@@ -82,7 +82,7 @@ func main() {
 
 	router := routes.Setup(logger, healthHandler, cacheHandler)
 
-	// 6. Configure HTTP Server
+	// ---------- Configure HTTP Server -----------------
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.AppPort),
 		Handler:      router,
@@ -91,7 +91,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	// 7. Start HTTP Server in background goroutine
+	//------  Start HTTP Server in background goroutine------
 	go func() {
 		logger.Info("starting http server", slog.String("addr", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -100,7 +100,7 @@ func main() {
 		}
 	}()
 
-	// 8. Graceful Shutdown signals
+	// ------------ Graceful Shutdown signals------------
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 

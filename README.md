@@ -1,28 +1,40 @@
-# 🏥 Health Checker Website Backend
+# Health Checker Website Backend
 
 A production-ready, containerized, and scalable Health Monitoring Backend built with **Golang**, **MySQL**, **Redis**, **Docker**, and **Docker Compose**, following **Clean Architecture** principles and industry best practices.
 
 ---
 
-# 📋 Table of Contents
+# 🌐 Service URLs
 
-* Overview
-* Features
-* Architecture
-* Tech Stack
-* Project Structure
-* Quick Start
-* Environment Configuration
-* Docker Services
-* API Documentation
-* Database Access
-* Swagger Documentation
-* Development Workflow
-* Docker Commands
-* Health Checks
-* Troubleshooting
-* Production Deployment
-* Security Best Practices
+| Service         | URL                                      |
+| --------------- | ---------------------------------------- |
+| API             | http://localhost:8000                    |
+| Health Check    | http://localhost:8000/health             |
+| Detailed Health | http://localhost:8000/health/details     |
+| Swagger         | http://localhost:8000/swagger/index.html |
+| phpMyAdmin      | http://localhost:8080                    |
+
+---
+
+# Table of Contents
+
+- Overview
+- Features
+- Architecture
+- Tech Stack
+- Project Structure
+- Quick Start
+- Environment Configuration
+- Docker Services
+- API Documentation
+- Database Access
+- Swagger Documentation
+- Development Workflow
+- Docker Commands
+- Health Checks
+- Troubleshooting
+- Production Deployment
+- Security Best Practices
 
 ---
 
@@ -32,14 +44,14 @@ The Health Checker Website Backend provides real-time monitoring and verificatio
 
 ### Core Responsibilities
 
-* Application Health Monitoring
-* MySQL Connectivity Verification
-* Redis Connectivity Verification
-* Cache Management APIs
-* Structured Logging
-* Graceful Shutdown
-* Dockerized Deployment
-* Production-Ready Configuration
+- Application Health Monitoring
+- MySQL Connectivity Verification
+- Redis Connectivity Verification
+- Cache Management APIs
+- Structured Logging
+- Graceful Shutdown
+- Dockerized Deployment
+- Production-Ready Configuration
 
 ---
 
@@ -47,32 +59,32 @@ The Health Checker Website Backend provides real-time monitoring and verificatio
 
 ### Application Monitoring
 
-* Health Check Endpoint
-* Detailed System Status Endpoint
-* Uptime Monitoring
-* Dependency Status Verification
+- Health Check Endpoint
+- Detailed System Status Endpoint
+- Uptime Monitoring
+- Dependency Status Verification
 
 ### Database Features
 
-* MySQL Connection Pooling
-* Persistent Database Storage
-* Automatic Health Monitoring
+- MySQL Connection Pooling
+- Persistent Database Storage
+- Automatic Health Monitoring
 
 ### Cache Features
 
-* Redis Connection Pooling
-* Redis Persistence (AOF + RDB)
-* Cache Testing Endpoints
+- Redis Connection Pooling
+- Redis Persistence (AOF + RDB)
+- Cache Testing Endpoints
 
 ### Production Features
 
-* Docker Multi-stage Build
-* Non-root Containers
-* Structured JSON Logging
-* Graceful Shutdown
-* Environment-based Configuration
-* Health Checks
-* Dedicated Docker Network
+- Docker Multi-stage Build
+- Non-root Containers
+- Structured JSON Logging
+- Graceful Shutdown
+- Environment-based Configuration
+- Health Checks
+- Dedicated Docker Network
 
 ---
 
@@ -484,8 +496,8 @@ redis-cli ping
 
 The API container starts only when:
 
-* MySQL is healthy
-* Redis is healthy
+- MySQL is healthy
+- Redis is healthy
 
 Configured via:
 
@@ -512,9 +524,9 @@ docker compose logs mysql
 
 Verify credentials:
 
-* DB_HOST
-* DB_USER
-* DB_PASSWORD
+- DB_HOST
+- DB_USER
+- DB_PASSWORD
 
 ---
 
@@ -561,13 +573,13 @@ MySQL Redis
 
 ### Production Checklist
 
-* Change all default passwords
-* Enable HTTPS
-* Use Reverse Proxy
-* Restrict Database Ports
-* Enable Log Aggregation
-* Enable Monitoring & Alerting
-* Configure Automated Backups
+- Change all default passwords
+- Enable HTTPS
+- Use Reverse Proxy
+- Restrict Database Ports
+- Enable Log Aggregation
+- Enable Monitoring & Alerting
+- Configure Automated Backups
 
 ---
 
@@ -575,22 +587,22 @@ MySQL Redis
 
 ### Container Security
 
-* Run containers as non-root users
-* Use multi-stage Docker builds
-* Minimize image size
+- Run containers as non-root users
+- Use multi-stage Docker builds
+- Minimize image size
 
 ### Database Security
 
-* Strong passwords
-* Private network access
-* Regular backups
+- Strong passwords
+- Private network access
+- Regular backups
 
 ### Application Security
 
-* Input validation
-* Request timeouts
-* Graceful error handling
-* Environment-based secrets
+- Input validation
+- Request timeouts
+- Graceful error handling
+- Environment-based secrets
 
 ---
 
